@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>3D Cloth Simulation – Refined Sphere & Cylinder</title>
+    <title>3D Cloth Simulation – Plane & Draped</title>
     <!-- p5.js library -->
     <script src="https://cdn.jsdelivr.net/npm/p5@1.5.0/lib/p5.min.js"></script>
     <!-- p5.dom library for UI elements -->
@@ -85,7 +85,8 @@
       <p>
         <strong>Sphere</strong>: bottom=0, top=200 (center=100, radius=100), pinned at y=0.<br>
         <strong>Cylinder</strong>: top=0, bottom=300, pinned at y=0.<br>
-        Turn on Stretch, Shear, Bending &amp; set Iterations=8+ for stable collisions.
+        <em>Plane mode</em> now has a simple floor clamp at y=0.<br>
+        Turn on/off the toggles below to see different effects.
       </p>
 
       <!-- Simulation Mode -->
@@ -260,7 +261,7 @@
       let cylinderTopY = 0, cylinderBottomY = 300, cylRadius = 100;
       let cylHeight = cylinderBottomY - cylinderTopY; // 300
 
-      /* SIMULATION PARAMS */
+      /* SIMULATION PARAMS (turn some ON by default) */
       let damping = 0.98, iterations = 8;
       let stretchFactor = 1.0, shearFactor = 1.0, bendingFactor = 1.0;
       let weight = 1.0;
@@ -274,9 +275,15 @@
       const BASE_WINDX = 0.0, BASE_WINDY = 0.0, BASE_WINDZ = 0.0, BASE_WINDBUFFER = 1.0;
       const BASE_GRAVITY = 0.0;
 
-      /* TOGGLES */
-      let dampingOn = false, iterationsOn = false, stretchOn = false, shearOn = false, bendingOn = false;
-      let weightOn = false, windXOn = false, windYOn = false, windZOn = false, windBufOn = false, gravityOn = false;
+      /* TOGGLES (set many to true so we see motion by default) */
+      let dampingOn = true;
+      let iterationsOn = true;
+      let stretchOn = true;
+      let shearOn = true;
+      let bendingOn = true;
+      let weightOn = true;
+      let windXOn = false, windYOn = false, windZOn = false, windBufOn = false;
+      let gravityOn = true;
       let shadingOn = false;
 
       /* MODES */
@@ -366,6 +373,7 @@
           rad.option("Off");
           rad.option("On");
           rad.parent(select(`#${paramName}RadioGroup`));
+          // If the global toggle is true => select On, else Off
           rad.selected(window[paramOnVar] ? "On" : "Off");
           rad.changed(()=>{
             window[paramOnVar] = (rad.value()==="On");
@@ -721,16 +729,15 @@
         if(interactionMode==="rotate") orbitControl();
         if(simulationRunning) updateCloth();
 
+        // Draw shape only if Draped
         if(simulationMode==="draped"){
           noStroke(); fill("#222");
           if(formMode==="sphere"){
-            // Sphere: bottom=0, top=200 => center=100
             push();
             translate(sphereCenter.x, sphereCenter.y, sphereCenter.z);
             sphere(sphereRadius);
             pop();
           } else {
-            // Cylinder: top=0, bottom=300 => midpoint=150
             push();
             let midY = (cylinderTopY + cylinderBottomY)/2;
             translate(0, midY, 0);
@@ -845,12 +852,31 @@
         // 3) Self-collision (1 pass at the end)
         doSelfCollision();
 
-        // 4) Final shape collision + clamps if draped
-        if(simulationMode === "draped"){
+        // 4) If plane mode => simple floor clamp at y=0
+        if(simulationMode === "plane"){
+          doPlaneFloorClamp(); 
+        }
+        // If draped => final shape collision + clamps
+        else {
           if(formMode === "sphere") doSphereCollision();
           else if(formMode === "cylinder") doCylinderCollision();
           doCeilingClamp();
           doFloorClamp();
+        }
+      }
+
+      /* =========================
+         EXTRA COLLISION/CLAMP LOGIC
+      ==========================*/
+      function doPlaneFloorClamp(){
+        // For plane mode, clamp the cloth so it won't go below y=0
+        const friction = 0.5;
+        let floorY = 0;
+        for(let p of clothPoints){
+          if(!p.pinned && p.y > floorY){
+            p.y = floorY;
+            p.oldy = p.y - friction*(p.y - p.oldy);
+          }
         }
       }
 
@@ -922,7 +948,6 @@
         }
       }
 
-      // If cloth tries to go above pinned row => clamp
       function doCeilingClamp(){
         // For sphere pinned at y=0, for cylinder pinned at y=0
         const friction = 0.5;
@@ -935,7 +960,6 @@
         }
       }
 
-      // If cloth tries to go below shape bottom => clamp
       function doFloorClamp(){
         // For sphere => top=200 => if p.y>200 clamp
         // For cylinder => bottom=300 => if p.y>300 clamp
