@@ -276,15 +276,16 @@
       let sphereRadius = 100;
 
       /* CYLINDER parameters for Draped mode */
-      // We'll define a cylinder centered so that its top face is at y=-50 and bottom at y=-350,
-      // making it appear taller & higher in the scene.
+      // We'll define a cylinder so that its top face is at y=-50 and bottom at y=+250
+      // giving it a total height of 300. This way, a larger y-value is "lower" in space.
       let cylRadius = 100;
       let cylHeight = 300;
-      let cylinderTopY = -50;           // top face at y = -50
-      let cylinderBottomY = cylinderTopY - cylHeight; // bottom face at y = -350
+      let cylinderTopY = -50;           
+      let cylinderBottomY = cylinderTopY + cylHeight; // -50 + 300 = 250
 
-      /* Invisible floor for Draped mode */
-      let floorY = 150; // cloth cannot go below y = 150
+      /* Invisible floor */
+      // We'll default to 150, but override it to match the cylinder bottom in cylinder mode
+      let floorY = 150;
 
       /* SIMULATION PARAMETERS (default) */
       let damping = 0.98;
@@ -450,17 +451,60 @@
         }
 
         // Sliders for each parameter
-        createSliderAndLabel("dampingSlider", (val) => { damping = val; select("#dampingVal").html(nf(val, 1, 2)); }, 0.90, 1.0, 0.98, 0.01);
-        createSliderAndLabel("iterationsSlider", (val) => { iterations = val; select("#iterationsVal").html(val); }, 1, 10, 5, 1);
-        createSliderAndLabel("stretchSlider", (val) => { stretchFactor = val; select("#stretchVal").html(nf(val, 1, 2)); }, 0.8, 1.2, 1.0, 0.01);
-        createSliderAndLabel("shearSlider", (val) => { shearFactor = val; select("#shearVal").html(nf(val, 1, 2)); }, 0.8, 1.2, 1.0, 0.01);
-        createSliderAndLabel("bendingSlider", (val) => { bendingFactor = val; select("#bendingVal").html(nf(val, 1, 2)); }, 0.8, 1.2, 1.0, 0.01);
-        createSliderAndLabel("weightSlider", (val) => { weight = val; select("#weightVal").html(nf(val, 1, 2)); }, 0.5, 2.0, 1.0, 0.1);
-        createSliderAndLabel("windXSlider", (val) => { windX = val; select("#windXVal").html(nf(val, 1, 2)); }, -1, 1, 0.2, 0.01);
-        createSliderAndLabel("windYSlider", (val) => { windY = val; select("#windYVal").html(nf(val, 1, 2)); }, -1, 1, 0, 0.01);
-        createSliderAndLabel("windZSlider", (val) => { windZ = val; select("#windZVal").html(nf(val, 1, 2)); }, -1, 1, 0.1, 0.01);
-        createSliderAndLabel("windBufSlider", (val) => { windBuffer = val; select("#windBufVal").html(nf(val, 1, 2)); }, 0, 2, 1.0, 0.01);
-        createSliderAndLabel("gravitySlider", (val) => { gravity = val; select("#gravityVal").html(nf(val, 1, 2)); }, 0, 1, 0.4, 0.01);
+        createSliderAndLabel("dampingSlider", (val) => {
+          damping = val;
+          select("#dampingVal").html(nf(val, 1, 2));
+        }, 0.90, 1.0, 0.98, 0.01);
+
+        createSliderAndLabel("iterationsSlider", (val) => {
+          iterations = val;
+          select("#iterationsVal").html(val);
+        }, 1, 10, 5, 1);
+
+        createSliderAndLabel("stretchSlider", (val) => {
+          stretchFactor = val;
+          select("#stretchVal").html(nf(val, 1, 2));
+        }, 0.8, 1.2, 1.0, 0.01);
+
+        createSliderAndLabel("shearSlider", (val) => {
+          shearFactor = val;
+          select("#shearVal").html(nf(val, 1, 2));
+        }, 0.8, 1.2, 1.0, 0.01);
+
+        createSliderAndLabel("bendingSlider", (val) => {
+          bendingFactor = val;
+          select("#bendingVal").html(nf(val, 1, 2));
+        }, 0.8, 1.2, 1.0, 0.01);
+
+        createSliderAndLabel("weightSlider", (val) => {
+          weight = val;
+          select("#weightVal").html(nf(val, 1, 2));
+        }, 0.5, 2.0, 1.0, 0.1);
+
+        createSliderAndLabel("windXSlider", (val) => {
+          windX = val;
+          select("#windXVal").html(nf(val, 1, 2));
+        }, -1, 1, 0.2, 0.01);
+
+        createSliderAndLabel("windYSlider", (val) => {
+          windY = val;
+          select("#windYVal").html(nf(val, 1, 2));
+        }, -1, 1, 0, 0.01);
+
+        createSliderAndLabel("windZSlider", (val) => {
+          windZ = val;
+          select("#windZVal").html(nf(val, 1, 2));
+        }, -1, 1, 0.1, 0.01);
+
+        createSliderAndLabel("windBufSlider", (val) => {
+          windBuffer = val;
+          select("#windBufVal").html(nf(val, 1, 2));
+        }, 0, 2, 1.0, 0.01);
+
+        createSliderAndLabel("gravitySlider", (val) => {
+          gravity = val;
+          select("#gravityVal").html(nf(val, 1, 2));
+        }, 0, 1, 0.4, 0.01);
       }
 
       /* Setup cloth based on simulation mode */
@@ -503,8 +547,7 @@
             clothPoints[centerIdx].oldz = sphereCenter.z;
 
           } else if (formMode === "cylinder") {
-            // Cylinder top face at y = cylinderTopY (e.g. -50)
-            // Cylinder bottom face at y = cylinderBottomY (e.g. -350)
+            // Cylinder top at y=-50, bottom at y=+250
             // Place cloth so it starts at top face (y = cylinderTopY)
             let startY = cylinderTopY;
             createClothPoints_Draped(-clothWidth/2, startY, -clothHeight/2);
@@ -522,6 +565,18 @@
             clothPoints[centerIdx].oldz = 0;
           }
         }
+        
+        // Override the floor if needed
+        if (simulationMode === "draped") {
+          if (formMode === "sphere") {
+            floorY = 150;  // keep default floor for sphere
+          } else if (formMode === "cylinder") {
+            floorY = cylinderBottomY; // floor matches cylinder bottom (y=250)
+          }
+        } else {
+          floorY = 150; // plane mode: revert to default
+        }
+
         createSubPointsAndConstraints();
       }
 
@@ -536,10 +591,12 @@
             if (pinningMode === "top") {
               pinned = (y === 0);
             } else if (pinningMode === "corners") {
-              pinned = ((x === 0 && y === 0) ||
-                        (x === cols-1 && y === 0) ||
-                        (x === 0 && y === rows-1) ||
-                        (x === cols-1 && y === rows-1));
+              pinned = (
+                (x === 0 && y === 0) ||
+                (x === cols-1 && y === 0) ||
+                (x === 0 && y === rows-1) ||
+                (x === cols-1 && y === rows-1)
+              );
             }
             clothPoints.push({
               x: px, y: py, z: pz,
@@ -752,17 +809,21 @@
             p.oldx = p.x;
             p.oldy = p.y;
             p.oldz = p.z;
+
             let sinVal = sin(frameCount * freq);
             let effectiveWindX = windXOn ? windBuffer * windX * sinVal : BASE_WINDX;
             let effectiveWindY = windYOn ? windBuffer * windY * sinVal : BASE_WINDY;
             let effectiveWindZ = windZOn ? windBuffer * windZ * sinVal : BASE_WINDZ;
+
             vx *= (dampingOn ? damping : BASE_DAMPING);
             vy *= (dampingOn ? damping : BASE_DAMPING);
             vz *= (dampingOn ? damping : BASE_DAMPING);
+
             let effGrav = gravityOn ? gravity : BASE_GRAVITY;
             let effWeight = weightOn ? weight : BASE_WEIGHT;
+
             p.x += vx + effectiveWindX;
-            p.y += vy + effGrav*effWeight + effectiveWindY;
+            p.y += vy + effGrav * effWeight + effectiveWindY;
             p.z += vz + effectiveWindZ;
           }
         }
@@ -863,10 +924,9 @@
         const collisionFriction = 0.5;
         for (let p of clothPoints) {
           if (!p.pinned) {
-            // 1. Check if p.y is between top & bottom of cylinder
-            // top is cylinderTopY (e.g. -50), bottom is cylinderBottomY (e.g. -350)
-            if (p.y < cylinderTopY && p.y > cylinderBottomY) {
-              // 2. Check radial distance from y-axis
+            // Check if p.y is between the cylinder's top and bottom
+            if (p.y > cylinderTopY && p.y < cylinderBottomY) {
+              // Then check radial distance from the y-axis
               let r = sqrt(p.x*p.x + p.z*p.z);
               if (r < cylRadius) {
                 let overlap = cylRadius - r;
@@ -970,15 +1030,14 @@
           } else {
             // Cylinder
             push();
-            // We'll place the cylinder so top is at y=cylinderTopY, bottom at y=cylinderBottomY
-            // So we translate to the midpoint of top & bottom
-            let midY = (cylinderTopY + cylinderBottomY)/2; // e.g. -200
+            // We'll place the cylinder so top is at y=cylinderTopY (-50), bottom at y=cylinderBottomY (250)
+            // The midpoint is (cylinderTopY + cylinderBottomY)/2 = 100
+            let midY = (cylinderTopY + cylinderBottomY)/2;
             translate(0, midY, 0);
-            // height is cylinderTopY - cylinderBottomY = 300
             cylinder(cylRadius, cylHeight);
             pop();
           }
-          // Draw invisible floor
+          // Draw invisible floor (wireframe)
           push();
           translate(0, floorY, 0);
           noFill();
@@ -1015,6 +1074,7 @@
           }
         }
 
+        // Draw cloth constraints as lines
         stroke(255);
         strokeWeight(2);
         for (let c of clothConstraints) {
@@ -1023,6 +1083,7 @@
           line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
         }
 
+        // Draw cloth points as small spheres
         noStroke();
         fill("#FF0000");
         for (let p of clothPoints) {
