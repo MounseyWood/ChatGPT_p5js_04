@@ -282,9 +282,6 @@
       let cylHeight = 300;
       let cylinderTopY = -50;           // top face at y = -50
       let cylinderBottomY = cylinderTopY - cylHeight; // bottom face at y = -350
-      let midY = (cylinderTopY + cylinderBottomY) / 2;  // -200
-      translate(0, midY, 0);
-      cylinder(cylRadius, cylHeight);
 
       /* Invisible floor for Draped mode */
       let floorY = 150; // cloth cannot go below y = 150
